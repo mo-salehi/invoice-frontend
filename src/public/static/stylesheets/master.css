@@ -71,6 +71,59 @@
 .full-width {
   width: 100%;
 }
+.notifications {
+  text-align: center;
+}
+.message {
+  padding: 5px 20px;
+  border-radius: 25px;
+}
+.message-success{
+  background-color: #03dac5;
+  color: #0a040e;
+}
+.message-error{
+  background-color: #eb4d4d;
+  color: #ffffff;
+}
+button {
+  display: inline-block;
+  height: 20px;
+  padding: 0 10px;
+  color: #555;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: .1rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: transparent;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  box-sizing: border-box; }
+.button-primary {
+  background-color: #03dac5;
+  color: #193d3a;
+}
+.button-cancel {
+  background-color: #eb4d4d;
+  color: #ffffff;
+}
+.newLineForm .button-cancel {
+  float: right;
+}
+.lineButtons {
+  width: 140px;
+  
+  
+}
+.lineButtons .button-cancel{
+
+  margin-top: 4px;
+}
 
 @media only screen and (max-width: 600px) {
   .invoice-box table tr.top table td {

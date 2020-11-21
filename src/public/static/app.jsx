@@ -8,6 +8,13 @@ class LineItem extends React.Component {
           <tr key={i}>
             <td>{lineItems.description}</td>
             <td>{lineItems.price}</td>
+            <td>
+              <button
+                onClick={() => this.props.onDelete(i)}
+                className="button-cancel">
+                Delete
+              </button>
+            </td>
           </tr>
         ))}
       </React.Fragment>
@@ -16,7 +23,6 @@ class LineItem extends React.Component {
 }
 class Invoice extends React.Component {
   state = {
-    logoSrc: "/static/images/collectai_logo_green_bg.jpg",
     invoice: {
       email: "",
       fullName: "",
@@ -24,11 +30,12 @@ class Invoice extends React.Component {
       id: "",
       createdAt: "",
       dueAt: "",
-      lineItems: [{ description: "", price: "" }],
+      lineItems: [{ description: "", price: 0.0 }],
     },
     showAddLine: false,
     newDesc: "",
     newPrice: "",
+    notification: { message: "", isActive: false, type: "" },
   };
   componentDidMount() {
     fetch("/api/invoice.json")
@@ -38,17 +45,55 @@ class Invoice extends React.Component {
   updateInputValue = (event) => {
     this.setState({ [event.target.name]: event.target.value });
   };
-  cancelNewLine = () =>  {
-    this.setState({showAddLine: false });
+  cancelNewLine = () => {
+    this.setState({ showAddLine: false });
   };
-  saveNewLine = () =>  {
+  saveNewLine = () => {
     const invoice = this.state.invoice;
-    const newLine = {description: this.state.newDesc, price: this.state.newPrice}
-    invoice.lineItems.push(newLine);
-    this.setState({ invoice, showAddLine: false, newDesc: "", newPrice: ""});
+    const newLine = {
+      description: this.state.newDesc,
+      price: parseFloat(this.state.newPrice),
+    };
+    const rx = /^\d{0,12}(\.\d{0,2})?$/;
+    if (rx.test(newLine.price)) {
+      invoice.lineItems.push(newLine);
+      const notification = {
+        message: "New item has been added",
+        isActive: true,
+        type: "success",
+      };
+      this.setState({
+        notification,
+        invoice,
+        showAddLine: false,
+        newDesc: "",
+        newPrice: "",
+      });
+    } else {
+      const notification = {
+        message: "Invalid input: price should be a number",
+        isActive: true,
+        type: "error",
+      };
+      this.setState({ notification });
+    }
   };
   addNewLine = () => {
-    this.setState({showAddLine: true });
+    this.setState({ showAddLine: true });
+  };
+  deleteLine = (itemIndex) => {
+    const invoice = this.state.invoice;
+    const lineItems = invoice.lineItems;
+    const remainLineItems = lineItems
+      .slice(0, itemIndex)
+      .concat(lineItems.slice(itemIndex + 1, lineItems.length));
+    invoice.lineItems = remainLineItems;
+    const notification = {
+      message: "The item has been deleted",
+      isActive: true,
+      type: "success",
+    };
+    this.setState({notification, invoice});
   };
   render() {
     const logoStyle = {
@@ -59,16 +104,28 @@ class Invoice extends React.Component {
       <table cellPadding="0" cellSpacing="0">
         <tbody>
           <tr className="top">
-            <td colSpan="2">
+            <td colSpan="3">
               <table>
                 <tbody>
+                  <tr className="notifications">
+                    <td colSpan="3">
+                      {this.state.notification.isActive ? (
+                        <p className={this.classChange()}>
+                          {this.state.notification.message}
+                        </p>
+                      ) : null}
+                    </td>
+                  </tr>
                   <tr>
                     <td className="title">
-                      <img src={this.state.logoSrc} style={logoStyle} />
+                      <img
+                        src="/static/images/collectai_logo_green_bg.jpg"
+                        style={logoStyle}
+                      />
                     </td>
                     <td>
                       Invoice Nr.:
-                      <span>{this.state.invoice.id}</span>
+                      <span>{(this.state.invoice.id).substring(0,10)}</span>
                       <br />
                       Created: <span>{this.state.invoice.createdAt}</span>
                       <br />
@@ -80,7 +137,7 @@ class Invoice extends React.Component {
             </td>
           </tr>
           <tr className="information">
-            <td colSpan="2">
+            <td colSpan="3">
               <table>
                 <tbody>
                   <tr>
@@ -91,7 +148,7 @@ class Invoice extends React.Component {
                       <br />
                       Hamburg, Germany
                     </td>
-                    <td>
+                    <td colSpan="2">
                       {this.state.invoice.company}
                       <br />
                       {this.state.invoice.fullName}
@@ -107,54 +164,70 @@ class Invoice extends React.Component {
             <td>Item</td>
 
             <td>Price</td>
+            <td></td>
           </tr>
-          <LineItem lineItems={this.state.invoice.lineItems} />
+          <LineItem
+            onDelete={this.deleteLine}
+            lineItems={this.state.invoice.lineItems}
+          />
           {this.newLineOpener()}
           <tr className="total">
             <td></td>
-            <td>Total: $385.00</td>
+            <td colSpan="2">Total: $<span>{this.totalAmount()}</span></td>
           </tr>
         </tbody>
       </table>
     );
   }
+  classChange() {
+    let messageClass = "message message-";
+    messageClass +=
+      this.state.notification.type === "error" ? "error" : "success";
+    return messageClass;
+  }
+  totalAmount() {
+    const lineItems = [...this.state.invoice.lineItems];
+    const totalprice = parseFloat(
+      lineItems.reduce((a, v) => (a = a + v.price), 0)
+    ).toFixed(2);
+    return totalprice;
+  }
   newLineOpener() {
     let showAddLine = this.state.showAddLine;
     if (showAddLine)
       return (
-        <React.Fragment>
-          <tr className="newLineForm">
-            <td>
-              <input
-                name="newDesc"
-                type="text"
-                className="full-width"
-                value={this.state.newDesc}
-                onChange={this.updateInputValue}
-              />
-            </td>
-            <td>
-              <input
-                name="newPrice"
-                type="text"
-                className="full-width"
-                value={this.state.newPrice}
-                onChange={this.updateInputValue}
-              />
-            </td>
-          </tr>
-          <tr className="newLineForm">
-            <td>
-              <button onClick={this.saveNewLine} className="button-primary">
-                Save
-              </button>
-              <button onClick={this.cancelNewLine} className="button-primary">
-                Cancel
-              </button>
-            </td>
-            <td></td>
-          </tr>
-        </React.Fragment>
+        <tr className="newLineForm">
+          <td>
+            <input
+              name="newDesc"
+              type="text"
+              className="full-width"
+              placeholder="Description"
+              value={this.state.newDesc}
+              onChange={this.updateInputValue}
+            />
+          </td>
+          <td>
+            <input
+              name="newPrice"
+              type="text"
+              className="full-width"
+              maxLength={9}
+              placeholder="Amount"
+              type="text"
+              value={this.state.newPrice}
+              onChange={this.updateInputValue}
+            />
+          </td>
+          <td className="lineButtons">
+            <button onClick={this.saveNewLine} className="button-primary">
+              Save
+            </button>
+            <button onClick={this.cancelNewLine} className="button-cancel">
+              Cancel
+            </button>
+          </td>
+        </tr>
       );
     else
       return (
@@ -167,7 +240,7 @@ class Invoice extends React.Component {
           <td></td>
         </tr>
       );
-  };
+  }
 }
 const domContainer = document.querySelector("#invoice");
 ReactDOM.render(<Invoice />, domContainer);
