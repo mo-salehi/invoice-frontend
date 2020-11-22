@@ -1,5 +1,27 @@
 "use strict";
 
+class Notification extends React.Component {
+  render() {
+    return (
+      <tr className="notifications">
+        <td colSpan="3">
+          {this.props.notification.isActive ? (
+            <p className={this.classChange()}>
+              {this.props.notification.message}
+            </p>
+          ) : null}
+        </td>
+      </tr>
+    );
+  }
+  classChange() {
+    let messageClass = "message message-";
+    messageClass +=
+      this.props.notification.type === "error" ? "error" : "success";
+    return messageClass;
+  }
+}
+
 class LineItem extends React.Component {
   render() {
     return (
@@ -11,7 +33,8 @@ class LineItem extends React.Component {
             <td>
               <button
                 onClick={() => this.props.onDelete(i)}
-                className="button-cancel">
+                className="button-cancel"
+              >
                 Delete
               </button>
             </td>
@@ -93,7 +116,7 @@ class Invoice extends React.Component {
       isActive: true,
       type: "success",
     };
-    this.setState({notification, invoice});
+    this.setState({ notification, invoice });
   };
   render() {
     const logoStyle = {
@@ -107,15 +130,7 @@ class Invoice extends React.Component {
             <td colSpan="3">
               <table>
                 <tbody>
-                  <tr className="notifications">
-                    <td colSpan="3">
-                      {this.state.notification.isActive ? (
-                        <p className={this.classChange()}>
-                          {this.state.notification.message}
-                        </p>
-                      ) : null}
-                    </td>
-                  </tr>
+                  <Notification notification={this.state.notification} />
                   <tr>
                     <td className="title">
                       <img
@@ -125,7 +140,7 @@ class Invoice extends React.Component {
                     </td>
                     <td>
                       Invoice Nr.:
-                      <span>{(this.state.invoice.id).substring(0,10)}</span>
+                      <span>{this.state.invoice.id.substring(0, 10)}</span>
                       <br />
                       Created: <span>{this.state.invoice.createdAt}</span>
                       <br />
@@ -173,18 +188,15 @@ class Invoice extends React.Component {
           {this.newLineOpener()}
           <tr className="total">
             <td></td>
-            <td colSpan="2">Total: $<span>{this.totalAmount()}</span></td>
+            <td colSpan="2">
+              Total: $<span>{this.totalAmount()}</span>
+            </td>
           </tr>
         </tbody>
       </table>
     );
   }
-  classChange() {
-    let messageClass = "message message-";
-    messageClass +=
-      this.state.notification.type === "error" ? "error" : "success";
-    return messageClass;
-  }
+
   totalAmount() {
     const lineItems = [...this.state.invoice.lineItems];
     const totalprice = parseFloat(
