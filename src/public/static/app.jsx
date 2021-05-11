@@ -1,5 +1,5 @@
 "use strict";
-
+//
 class Notification extends React.Component {
   render() {
     return (
